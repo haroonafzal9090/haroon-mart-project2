@@ -60,10 +60,10 @@ def create_db_and_tables() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print("LifeSpan Event..")
-    task = asyncio.create_task(consume_messages('products', 'broker:19092'))
+    task = asyncio.create_task(consume_messages('products', bootstrap_servers='broker:19092'))
     asyncio.create_task(consume_order_messages(
         "AddOrder",
-        'broker:19092'
+        bootstrap_servers='broker:19092'
     ))
     create_db_and_tables()
     yield

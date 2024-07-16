@@ -1,4 +1,3 @@
-
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 from app import order_pb2
 from app.crud.product_crud import validate_product_by_id
@@ -10,7 +9,7 @@ async def consume_order_messages(topic, bootstrap_servers):
         topic,
         bootstrap_servers=bootstrap_servers,
         group_id="order-add-group",
-        # auto_offset_reset="earliest",
+        auto_offset_reset="earliest",  # Set to earliest if you want to consume from the beginning
     )
 
     # Start the consumer.
@@ -18,30 +17,29 @@ async def consume_order_messages(topic, bootstrap_servers):
     try:
         # Continuously listen for messages.
         async for message in consumer:
-            print("\n\n RAW INVENTORY MESSAGE\n\n ")
+            print("\n\n RAW ORDER MESSAGE\n\n ")
             print(f"Received message on topic {message.topic}")
             print(f"Message Value {message.value}")
 
-            
+            # Deserialize the message using order_pb2
+            order_data = order_pb2.Order()
+            order_data.ParseFromString(message.value)
+            print("ORDER DATA", order_data)
 
-           
-            new_product_id = order_pb2.Order.ParseFromString(message.value).product_id
+            new_product_id = order_data.product_id
+            print("PRODUCT ID", new_product_id)
+            print(type(new_product_id))
 
-            # 2. Check if Product Id is Valid
+            # Validate product id in database
             with next(get_session()) as session:
-                product = validate_product_by_id(
-                    product_id=new_product_id, session=session)
+                product = validate_product_by_id(product_id=new_product_id, session=session)
                 print("PRODUCT VALIDATION CHECK", product)
-                # 3. If Valid
-                # if product is None:
-                    # email_body = chat_completion(f"Admin has Sent InCorrect Product. Write Email to Admin {product_id}")
-                    
+
+                # If product is valid, proceed to produce message
                 if product is not None:
-                        # - Write New Topic
                     print("PRODUCT VALIDATION CHECK NOT NONE")
                     
-                    producer = AIOKafkaProducer(
-                        bootstrap_servers='broker:19092')
+                    producer = AIOKafkaProducer(bootstrap_servers='broker:19092')
                     await producer.start()
                     try:
                         await producer.send_and_wait(
@@ -51,43 +49,6 @@ async def consume_order_messages(topic, bootstrap_servers):
                     finally:
                         await producer.stop()
 
-            # Here you can add code to process each message.
-            # Example: parse the message, store it in a database, etc.
     finally:
         # Ensure to close the consumer when done.
         await consumer.stop()
-
-
-# async def consume_order_messages(topic, bootstrap_servers):
-#     consumer = AIOKafkaConsumer(
-#         topic,
-#         bootstrap_servers=bootstrap_servers,
-#         group_id="order_add_group",
-#         auto_offset_reset="earliest",
-#     )
-    
-#     await consumer.start()
-#     try:
-#         print("Kafka consumer started successfully.")
-
-#         async for message in consumer:
-#             print(f"Received message on topic {message.topic}")
-#             print(f"Message Value {message.value}")
-
-#             # Example: Deserialize protobuf message
-#             order = order_pb2.Order()
-#             order.ParseFromString(message.value)
-#             print(f"Parsed Order: {order}")
-
-#             # Example: Accessing fields from protobuf message
-#             product_id = order.product_id
-#             print(f"Product ID: {product_id}")
-
-#             # Example: Database interaction
-#             with next(get_session()) as session:
-#                 product = validate_product_by_id(product_id=product_id, session=session)
-#                 print("Product Validation Result:", product)
-
-#     finally:
-#         await consumer.stop()
-#         print("Kafka consumer stopped.")

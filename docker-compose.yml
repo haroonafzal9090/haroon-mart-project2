@@ -160,7 +160,7 @@ services:
       - postgres_product_db
       
     ports:
-      - "8087:8087" # Expose container port 8085 to host port 8087
+      - "8087:8087" # Expose container port 8087 to host port 8087
 
   api4:
     build:
@@ -172,7 +172,7 @@ services:
       - broker
       - postgres_order_db
     ports:
-      - "8088:8088" # Expose container port 8085 to host port 8088     
+      - "8088:8088" # Expose container port 8088 to host port 8088     
 
   postgres_db:
     image: postgres:latest # Use the official PostgreSQL image

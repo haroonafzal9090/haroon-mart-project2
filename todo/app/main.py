@@ -9,6 +9,7 @@ from typing import AsyncGenerator
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 import asyncio
 
+
 # Step 1: Import the generated protobuf code - Review todo post api route next.
 from app import todo_pb2
 # import logging
@@ -80,9 +81,7 @@ async def consume_messages(topic, bootstrap_servers):
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print("LifeSpan Event..")
     create_db_and_tables()
-    # loop.run_until_complete(consume_messages('todos2', 'broker:19092'))
-    asyncio.create_task(consume_messages('todos2', 'broker:19092'))
-
+    asyncio.create_task(consume_messages("todos", bootstrap_servers='broker:19092'))
     yield
 
 
@@ -127,7 +126,7 @@ async def create_todo(todo: Todo, session: Annotated[Session, Depends(get_sessio
     serialized_todo = todo_protbuf.SerializeToString()
     print(f"Serialized data: {serialized_todo}")
     # Produce message
-    await producer.send_and_wait("todos2", serialized_todo)
+    await producer.send_and_wait("todos", serialized_todo)
     session.add(todo)
     session.commit()
     session.refresh(todo)
