@@ -35,3 +35,11 @@ def delete_inventory_item_by_id(inventory_item_id: int, session: Session):
     session.delete(inventory_item)
     session.commit()
     return {"message": "Inventory Item Deleted Successfully"}
+
+
+def validate_inventory_item_by_id(inventory_item_product_id: int, session: Session):
+
+    inventory_item = session.exec(select(InventoryItem).where(InventoryItem.product_id == inventory_item_product_id)).one_or_none()
+    if inventory_item is None:
+        raise HTTPException(status_code=404, detail="Inventory Item not found")
+    return inventory_item
