@@ -13,56 +13,19 @@ from fastapi import FastAPI, Depends, HTTPException
 from app.crud.product_crud import get_all_products, get_product_by_id, delete_product_by_id, update_product_by_id
 from app import product_pb2
 from app.consumers.product_consumer import consume_messages
-from app.consumers.order_cosumer import consume_order_messages
+from app.consumers.inventory_cosumer import consume_inventory_messages
 
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
 
-# async def consume_messages(topic, bootstrap_servers):
-#     # Create a consumer instance.
-#     consumer = AIOKafkaConsumer(
-#         topic,
-#         bootstrap_servers=bootstrap_servers,
-#         group_id="product-consumer-group",
-#         auto_offset_reset='earliest'
-#     )
-
-#     # Start the consumer.
-#     await consumer.start()
-#     try:
-#         # Continuously listen for messages.
-#         async for message in consumer:
-#             print(f"Received message: {
-#                   message.value.decode()} on topic {message.topic}")
-#             # Here you can add code to process each message.
-#             # Example: parse the message, store it in a database, etc.
-#             new_product = product_pb2.Product()
-#             new_product.ParseFromString(message.value)
-#             print(f"\n\n Consumer Deserialized data: {new_product}")
-
-#             # Add the new product to the database
-#             with Session(engine) as session:
-#                 session.add(new_product)
-#                 session.commit()
-#                 session.refresh(new_product)
-#                 print(f"New product added to database: {new_product}")
-#     finally:
-#         # Ensure to close the consumer when done.
-#         await consumer.stop()
-
-
-# The first part of the function, before the yield, will
-# be executed before the application starts.
-# https://fastapi.tiangolo.com/advanced/events/#lifespan-function
-# loop = asyncio.get_event_loop()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print("LifeSpan Event..")
-    task = asyncio.create_task(consume_messages('products', bootstrap_servers='broker:19092'))
-    asyncio.create_task(consume_order_messages(
-        "AddOrder",
+    task = asyncio.create_task(consume_messages("products", bootstrap_servers='broker:19092'))
+    asyncio.create_task(consume_inventory_messages(
+        "AddStock",
         bootstrap_servers='broker:19092'
     ))
     create_db_and_tables()

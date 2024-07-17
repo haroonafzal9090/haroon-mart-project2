@@ -17,11 +17,11 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-  postgres_db:
-    driver: local
+  # postgres_db:
+  #   driver: local
   postgres_product_db:
     driver: local
-  postgres_order_db:
+  postgres_inventory_db:
     driver: local
   pgadmin:
     driver: local
@@ -126,17 +126,21 @@ services:
     volumes:
       - kong_data:/var/lib/postgresql/data
 
-  todo-service:
-    build:
-      context: ./todo
-      dockerfile: Dockerfile.dev
-    volumes:
-      - ./todo:/code # Sync local development directory with the container
-    depends_on:
-      - postgres_db
-      - broker
-    ports:
-      - "8085:8085" # Expose container port 8085 to host port 8085
+  # todo-service:
+    
+  #   build:
+  #     context: ./todo
+  #     dockerfile: Dockerfile.dev
+      
+  #   restart: always # Any Issue when RUnning Contianer = ShutDown
+
+  #   volumes:
+  #     - ./todo:/code # Sync local development directory with the container
+  #   depends_on:
+  #     - postgres_db
+  #     - broker
+  #   ports:
+  #     - "8085:8085" # Expose container port 8085 to host port 8085
 
   # api2:
   #   build:
@@ -149,10 +153,13 @@ services:
   #   ports:
   #     - "8086:8086" # Expose container port 8085 to host port 8085
 
-  api3:
+  product_service:
     build:
       context: ./product_service
       dockerfile: Dockerfile.dev
+          
+    restart: always # Any Issue when RUnning Contianer = ShutDown
+
     volumes:
       - ./product_service:/code # Sync local development directory with the container
     depends_on:
@@ -162,30 +169,33 @@ services:
     ports:
       - "8087:8087" # Expose container port 8087 to host port 8087
 
-  api4:
+  inventory_service:
     build:
-      context: ./order_service
+      context: ./inventory_service
       dockerfile: Dockerfile.dev
+
+    restart: always # Any Issue when RUnning Contianer = ShutDown
+
     volumes:
-      - ./order_service:/code # Sync local development directory with the container
+      - ./inventory_service:/code # Sync local development directory with the container
     depends_on:
       - broker
-      - postgres_order_db
+      - postgres_inventory_db
     ports:
       - "8088:8088" # Expose container port 8088 to host port 8088     
 
-  postgres_db:
-    image: postgres:latest # Use the official PostgreSQL image
-    restart: always
-    container_name: PostgresCont
-    environment:
-      - POSTGRES_USER=ziakhan
-      - POSTGRES_PASSWORD=my_password
-      - POSTGRES_DB=mydatabase
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_db:/var/lib/postgresql/data
+  # postgres_db:
+  #   image: postgres:latest # Use the official PostgreSQL image
+  #   restart: always
+  #   container_name: PostgresCont
+  #   environment:
+  #     - POSTGRES_USER=ziakhan
+  #     - POSTGRES_PASSWORD=my_password
+  #     - POSTGRES_DB=mydatabase
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - postgres_db:/var/lib/postgresql/data
   
   postgres_product_db:
     image: postgres:latest # Use the official PostgreSQL image
@@ -200,10 +210,10 @@ services:
     volumes:
       - postgres_product_db:/var/lib/postgresql/data
 
-  postgres_order_db:
+  postgres_inventory_db:
     image: postgres:latest # Use the official PostgreSQL image
     restart: always
-    container_name: PostgresOrderCont
+    container_name: PostgresInventoryCont
     environment:
       - POSTGRES_USER=ziakhan
       - POSTGRES_PASSWORD=my_password
@@ -211,7 +221,7 @@ services:
     ports:
       - "5435:5432"
     volumes:
-      - postgres_order_db:/var/lib/postgresql/data
+      - postgres_inventory_db:/var/lib/postgresql/data
 
   broker:
     image: apache/kafka:3.7.0
@@ -255,10 +265,10 @@ services:
       - ./specs-combiner:/code # Sync local development directory with the container
     depends_on:
       - kong
-      - todo-service
+      # - todo-service
       # - api2
-      - api3
-      - api4
+      - product_service
+      - inventory_service
     ports:
       - "9000:9000" # Expose container port 9000 to host port 9000
 
@@ -274,9 +284,9 @@ services:
     volumes:
       - pgadmin:/var/lib/pgadmin
     depends_on:
-      - postgres_db
+      # - postgres_db
       - postgres_product_db
-      - postgres_order_db
+      - postgres_inventory_db
       - db
 
 secrets:
