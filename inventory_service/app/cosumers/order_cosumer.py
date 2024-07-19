@@ -27,13 +27,13 @@ async def consume_order_messages(topic, bootstrap_servers):
             order_data.ParseFromString(message.value)
             print("DESERIALIZED ORDER DATA", order_data)
 
-            new_inventory_product_item_id = order_data.inventory_product_id
-            print("INVENTORY ITEM ID", new_inventory_product_item_id)
-            print(type(new_inventory_product_item_id))
+            new_inventory_item_product_id = order_data.inventory_product_id
+            print("INVENTORY ITEM ID", new_inventory_item_product_id)
+            print(type(new_inventory_item_product_id))
 
             # Validate product id in database
             with next(get_session()) as session:
-                inventory_item = validate_inventory_item_by_id(inventory_item_product_id=new_inventory_product_item_id, session=session)
+                inventory_item = validate_inventory_item_by_id(inventory_product_id=new_inventory_item_product_id, session=session)
                 print("INVENTORY VALIDATION CHECK", inventory_item)
 
                 # If product is valid, proceed to produce message

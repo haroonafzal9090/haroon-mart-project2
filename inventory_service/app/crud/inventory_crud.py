@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlmodel import Session, select
 from app.models.inventory_models import InventoryItem
+from app.models.order_models import OrderItem
 
 # Add a New Order Item to the Database
 def add_new_inventory_item(inventory_item_data: InventoryItem, session: Session):
@@ -37,9 +38,8 @@ def delete_inventory_item_by_id(inventory_item_id: int, session: Session):
     return {"message": "Inventory Item Deleted Successfully"}
 
 
-def validate_inventory_item_by_id(inventory_item_product_id: int, session: Session):
-
-    inventory_item = session.exec(select(InventoryItem).where(InventoryItem.product_id == inventory_item_product_id)).one_or_none()
+def validate_inventory_item_by_id(inventory_product_id: int, session: Session)-> InventoryItem | None:
+    inventory_item = session.exec(select(InventoryItem).where(InventoryItem.product_id == inventory_product_id)).one_or_none()
     if inventory_item is None:
-        raise HTTPException(status_code=404, detail="Inventory Item not found")
+        raise HTTPException(status_code=404, detail="Inventory Item Of Product ID not found")
     return inventory_item
