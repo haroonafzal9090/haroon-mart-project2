@@ -24,6 +24,7 @@ def add_new_inventory_item(inventory_item_data: InventoryItem, session: Session)
         raise e
     finally:
         session.close()
+        
 
 
 # Get All Orders from the Database
@@ -58,5 +59,16 @@ def validate_inventory_item_by_product_id(inventory_product_id: int, session: Se
         print("Inventory item not found")
     return inventory_item
 
+
+def update_inventory_item_quantity(product_id: int, new_quantity: int, session: Session) -> InventoryItem:
+    """ Update the quantity of an inventory item """
+    inventory_item = session.exec(select(InventoryItem).filter(InventoryItem.product_id == product_id)).one_or_none()
+    
+    if inventory_item:
+        inventory_item.quantity = new_quantity
+        session.add(inventory_item)
+        session.commit()
+    
+    return inventory_item
 
 
