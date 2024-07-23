@@ -5,12 +5,18 @@ from app.models.order_models import OrderItem
 
 # Add a New Order Item to the Database
 def add_new_order_item(order_item_data: OrderItem, session: Session):
-    print("Adding order Item to Database")
-    
-    session.add(order_item_data)
-    session.commit()
-    session.refresh(order_item_data)
-    return order_item_data
+    try:
+        existing_order = session.exec(select(OrderItem).where(OrderItem.id == order_item_data.id)).one_or_none()
+        if existing_order:
+            print(f"Error: An order with ID {order_item_data.id} already exists in the database.")
+            return None
+        
+        session.add(order_item_data)
+        session.commit()
+        session.refresh(order_item_data)
+        return order_item_data
+    finally:
+        session.close()
 
 
 # Get All Orders from the Database

@@ -3,14 +3,27 @@ from sqlmodel import Session, select
 from app.models.inventory_models import InventoryItem
 from app.models.order_models import OrderItem
 
-# Add a New Order Item to the Database
+# Add a New Inventory Item to the Database
 def add_new_inventory_item(inventory_item_data: InventoryItem, session: Session):
-    print("Adding order Item to Database")
-    
-    session.add(inventory_item_data)
-    session.commit()
-    session.refresh(inventory_item_data)
-    return inventory_item_data
+    try:
+        existing_inventory_item = session.exec(select(InventoryItem).filter(InventoryItem.id == inventory_item_data.id)).one_or_none()
+        if existing_inventory_item:
+            # Item already exists, update the quantity
+            existing_inventory_item.quantity += inventory_item_data.quantity
+            session.commit()
+            session.refresh(existing_inventory_item)
+            return existing_inventory_item
+        else:
+            # Item does not exist, add new item
+            session.add(inventory_item_data)
+            session.commit()
+            session.refresh(inventory_item_data)
+            return inventory_item_data
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
 
 
 # Get All Orders from the Database
@@ -38,8 +51,12 @@ def delete_inventory_item_by_id(inventory_item_id: int, session: Session):
     return {"message": "Inventory Item Deleted Successfully"}
 
 
-def validate_inventory_item_by_id(inventory_product_id: int, session: Session)-> InventoryItem | None:
+def validate_inventory_item_by_product_id(inventory_product_id: int, session: Session)-> InventoryItem | None:
     inventory_item = session.exec(select(InventoryItem).where(InventoryItem.product_id == inventory_product_id)).one_or_none()
     if inventory_item is None:
-        raise HTTPException(status_code=404, detail="Inventory Item Of Product ID not found")
+        # raise HTTPException(status_code=404, detail="Inventory Item Of Product ID not found")
+        print("Inventory item not found")
     return inventory_item
+
+
+

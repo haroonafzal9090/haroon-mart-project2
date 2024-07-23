@@ -21,7 +21,7 @@ def create_db_and_tables() -> None:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     
     print("Created DB and tables")
-    task = asyncio.create_task(consume_messages(
+    asyncio.create_task(consume_messages(
         "inventory-add-stock-response", bootstrap_servers='broker:19092'))
     asyncio.create_task(consume_order_messages(
         "AddOrder", bootstrap_servers='broker:19092'))

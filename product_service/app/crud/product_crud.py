@@ -7,10 +7,18 @@ from app.models.product_models import Product, ProductUpdate
 
 def add_new_product(session: Session, product: Product):
     print("Adding Product To Database")
-    session.add(product)
-    session.commit()
-    session.refresh(product)
-    return product
+    try:
+        existing_product = session.exec(select(Product).where(Product.id == product.id)).one_or_none()
+        if existing_product:
+            print(f"Error: Product with ID {product.id} already exists in the database.")
+            return None
+        
+        session.add(product)
+        session.commit()
+        session.refresh(product)
+        return product
+    finally:
+        session.close()
 
 # Get all products
 def get_all_products(session: Session):
